@@ -48,14 +48,6 @@
                 android:layout_height="wrap_content"
                 android:text="Object"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintBottom_toTopOf="@id/radio_face" />
-
-        <RadioButton
-                android:id="@+id/radio_face"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Face"
-                app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent" />
     </RadioGroup>
 

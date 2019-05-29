@@ -237,7 +237,6 @@ class MainActivity : AppCompatActivity() {
             when(radioGroup.checkedRadioButtonId) {
                 R.id.radio_text -> { analyzeText(visionImage) }
                 R.id.radio_object -> { analyzeObject(visionImage) }
-                R.id.radio_face -> { analyzeFace(visionImage) }
             }
         }
     }
@@ -273,17 +272,6 @@ class MainActivity : AppCompatActivity() {
         detector.processImage(visionImage)
             .addOnSuccessListener { objectList -> processObjectRecognitionResult(objectList) }
             .addOnFailureListener { e -> e.printStackTrace() }
-    }
-
-    /**
-     * 顔認識を行う
-     *
-     * @param visionImage 解析対象の画像
-     */
-    private fun analyzeFace(visionImage: FirebaseVisionImage) {
-        Log.d(TAG, "[analyzeFace] visionImage=$visionImage")
-
-
     }
 
     /**
