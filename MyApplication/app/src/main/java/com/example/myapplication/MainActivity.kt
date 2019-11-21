@@ -11,6 +11,7 @@ import android.util.Log
 import android.util.Size
 import android.view.Surface
 import android.view.TextureView
+import android.view.View
 import android.view.ViewGroup
 import android.widget.RadioGroup
 import android.widget.Toast
@@ -43,6 +44,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var textureView: TextureView
     private lateinit var graphicOverlay: GraphicOverlay
     private lateinit var radioGroup: RadioGroup
+    private lateinit var viewTarget: View
     private var textureSize = Size(0, 0)
     private val handler = Handler()
     private val runnable = object : Runnable {
@@ -63,6 +65,7 @@ class MainActivity : AppCompatActivity() {
         textureView = findViewById(R.id.view_finder)
         graphicOverlay = findViewById(R.id.graphic_overlay)
         radioGroup = findViewById(R.id.radio_group)
+        viewTarget = findViewById(R.id.view_target)
 
         // Request camera permissions
         if (allPermissionsGranted()) {
@@ -230,7 +233,11 @@ class MainActivity : AppCompatActivity() {
                 postRotate(-displayDegree.toFloat())
                 postScale(textureView.width.toFloat(), textureView.height.toFloat())
             }
-            val bitmap = Bitmap.createBitmap(original, 0, 0, original.width, original.height, matrix, true)
+            val x = viewTarget.left
+            val y = viewTarget.top
+            val width = viewTarget.right - viewTarget.left
+            val height = viewTarget.bottom - viewTarget.top
+            val bitmap = Bitmap.createBitmap(original, x, y, width, height, matrix, true)
 
             val visionImage = FirebaseVisionImage.fromBitmap(bitmap)
 

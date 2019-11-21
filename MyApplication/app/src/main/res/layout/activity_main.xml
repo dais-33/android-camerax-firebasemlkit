@@ -16,14 +16,24 @@
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toTopOf="parent"/>
 
+    <View
+            android:id="@+id/view_target"
+            android:layout_width="250dp"
+            android:layout_height="50dp"
+            android:background="@drawable/target_frame"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent"/>
+
     <com.example.myapplication.view.GraphicOverlay
             android:id="@+id/graphic_overlay"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintBottom_toBottomOf="@id/view_target"
+            app:layout_constraintLeft_toLeftOf="@id/view_target"
+            app:layout_constraintRight_toRightOf="@id/view_target"
+            app:layout_constraintTop_toTopOf="@id/view_target"/>
 
     <RadioGroup
             android:id="@+id/radio_group"
@@ -48,7 +58,7 @@
                 android:layout_height="wrap_content"
                 android:text="Object"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent" />
+                app:layout_constraintBottom_toBottomOf="parent"/>
     </RadioGroup>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
