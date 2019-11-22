@@ -4,19 +4,22 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Matrix
+import android.graphics.RectF
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
 import android.util.Size
 import android.view.Surface
-import android.view.TextureView
+import android.view.View
 import android.view.ViewGroup
-import android.widget.RadioGroup
+import android.widget.TextView
 import android.widget.Toast
 import androidx.camera.core.*
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.databinding.DataBindingUtil
+import com.example.myapplication.databinding.ActivityMainBinding
 import com.example.myapplication.view.GraphicOverlay
 import com.example.myapplication.view.ObjectGraphic
 import com.example.myapplication.view.TextGraphic
@@ -25,6 +28,7 @@ import com.google.firebase.ml.vision.common.FirebaseVisionImage
 import com.google.firebase.ml.vision.objects.FirebaseVisionObject
 import com.google.firebase.ml.vision.objects.FirebaseVisionObjectDetectorOptions
 import com.google.firebase.ml.vision.text.FirebaseVisionText
+import kotlin.math.min
 
 // This is an arbitrary number we are using to keep tab of the permission
 // request. Where an app has multiple context for requesting permission,
@@ -40,9 +44,7 @@ class MainActivity : AppCompatActivity() {
         private val TAG = MainActivity::class.java.simpleName
     }
 
-    private lateinit var textureView: TextureView
-    private lateinit var graphicOverlay: GraphicOverlay
-    private lateinit var radioGroup: RadioGroup
+    private lateinit var binding: ActivityMainBinding
     private var textureSize = Size(0, 0)
     private val handler = Handler()
     private val runnable = object : Runnable {
@@ -58,22 +60,18 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "[onCreate] savedInstanceState=$savedInstanceState")
-        setContentView(R.layout.activity_main)
-
-        textureView = findViewById(R.id.view_finder)
-        graphicOverlay = findViewById(R.id.graphic_overlay)
-        radioGroup = findViewById(R.id.radio_group)
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
 
         // Request camera permissions
         if (allPermissionsGranted()) {
-            textureView.post { startCamera() }
+            binding.viewFinder.post { startCamera() }
         } else {
             ActivityCompat.requestPermissions(
                 this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
         }
 
         // Every time the provided texture view changes, recompute layout
-        textureView.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+        binding.viewFinder.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
             updateTextureView()
         }
     }
@@ -110,7 +108,7 @@ class MainActivity : AppCompatActivity() {
 
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
             if (allPermissionsGranted()) {
-                textureView.post { startCamera() }
+                binding.viewFinder.post { startCamera() }
             } else {
                 Toast.makeText(this,
                     "Permissions not granted by the user.",
@@ -154,14 +152,14 @@ class MainActivity : AppCompatActivity() {
         preview.setOnPreviewOutputUpdateListener {
 
             // To update the SurfaceTexture, we have to remove it and re-add it
-            (textureView.parent as ViewGroup).apply {
-                removeView(textureView)
-                addView(textureView, 0)
+            (binding.viewFinder.parent as ViewGroup).apply {
+                removeView(binding.viewFinder)
+                addView(binding.viewFinder, 0)
             }
 
             textureSize = it.textureSize
 
-            textureView.surfaceTexture = it.surfaceTexture
+            binding.viewFinder.surfaceTexture = it.surfaceTexture
             updateTextureView()
         }
 
@@ -180,7 +178,7 @@ class MainActivity : AppCompatActivity() {
         Log.d(TAG, "[updateTextureView]")
 
         val matrix = Matrix().apply {
-            val displayDegree = when(textureView.display.rotation) {
+            val displayDegree = when(binding.viewFinder.display.rotation) {
                 Surface.ROTATION_0 -> 0
                 Surface.ROTATION_90 -> 90
                 Surface.ROTATION_180 -> 180
@@ -192,19 +190,19 @@ class MainActivity : AppCompatActivity() {
             val w = (if (oddRotate) textureSize.height else textureSize.width).toFloat()
             val h = (if (oddRotate) textureSize.width else textureSize.height).toFloat()
 
-            val sx = textureView.width.toFloat() / w
-            val sy = textureView.height.toFloat() / h
+            val sx = binding.viewFinder.width.toFloat() / w
+            val sy = binding.viewFinder.height.toFloat() / h
 
-            postScale(1f / textureView.width, 1f / textureView.height)
+            postScale(1f / binding.viewFinder.width, 1f / binding.viewFinder.height)
             postTranslate(-0.5f, -0.5f)
             postRotate(-displayDegree.toFloat())
             postScale(w, h)
             postScale(sx, sy)
-            postTranslate(textureView.width / 2f, textureView.height / 2f)
+            postTranslate(binding.viewFinder.width / 2f, binding.viewFinder.height / 2f)
         }
 
         // Finally, apply transformations to our TextureView
-        textureView.setTransform(matrix)
+        binding.viewFinder.setTransform(matrix)
     }
 
     /**
@@ -213,11 +211,11 @@ class MainActivity : AppCompatActivity() {
     private fun analyzeView() {
         Log.d(TAG, "[analyzeView]")
 
-        if (textureView.isAvailable) {
-            val original = textureView.bitmap
+        if (binding.viewFinder.isAvailable) {
+            val original = binding.viewFinder.bitmap
 
             val matrix = Matrix().apply {
-                val displayDegree = when(textureView.display.rotation) {
+                val displayDegree = when(binding.viewFinder.display.rotation) {
                     Surface.ROTATION_0 -> 0
                     Surface.ROTATION_90 -> 90
                     Surface.ROTATION_180 -> 180
@@ -228,13 +226,13 @@ class MainActivity : AppCompatActivity() {
                 postScale(1f / original.width, 1f / original.height)
                 postTranslate(-0.5f, -0.5f)
                 postRotate(-displayDegree.toFloat())
-                postScale(textureView.width.toFloat(), textureView.height.toFloat())
+                postScale(binding.viewFinder.width.toFloat(), binding.viewFinder.height.toFloat())
             }
             val bitmap = Bitmap.createBitmap(original, 0, 0, original.width, original.height, matrix, true)
 
             val visionImage = FirebaseVisionImage.fromBitmap(bitmap)
 
-            when(radioGroup.checkedRadioButtonId) {
+            when(binding.radioGroup.checkedRadioButtonId) {
                 R.id.radio_text -> { analyzeText(visionImage) }
                 R.id.radio_object -> { analyzeObject(visionImage) }
             }
@@ -284,15 +282,46 @@ class MainActivity : AppCompatActivity() {
 
         val blocks = result.textBlocks
         if (blocks.isNotEmpty()) {
-            graphicOverlay.clear()
+            binding.graphicOverlay.clear()
+//            binding.graphicOverlay.visibility = View.VISIBLE
+            binding.frameLayout.removeAllViews()
+            binding.frameLayout.visibility = View.VISIBLE
             for (block in blocks) {
                 val lines = block.lines
                 for (line in lines) {
-                    val elements = line.elements
-                    for (element in elements) {
-                        val textGraphic = TextGraphic(graphicOverlay, element)
-                        graphicOverlay.add(textGraphic)
+                    val textView = TextView(binding.frameLayout.context)
+                    binding.frameLayout.addView(textView)
+                    val rect = RectF(line.boundingBox)
+                    textView.apply {
+
+                        setTextColor(GraphicOverlay.Companion.Graphic.TEXT_COLOR)
+
+                        val n = line.text.length
+                        val fontSize = min(rect.width() / n, rect.height())
+                        textSize = fontSize
+
+                        text = line.text
+
+                        translationX = rect.left
+                        translationY = rect.top
+
+                        setBackgroundResource(R.drawable.text_frame_style)
+
+                        setOnClickListener {
+                            Toast.makeText(binding.frameLayout.context, line.text, Toast.LENGTH_SHORT).show()
+                        }
                     }
+                    textView.layoutParams.let {
+                        it.height = ViewGroup.LayoutParams.WRAP_CONTENT
+                        it.width = ViewGroup.LayoutParams.WRAP_CONTENT
+                        textView.layoutParams = it
+                    }
+
+//                    val elements = line.elements
+//                    for (element in elements) {
+//                        val textGraphic = TextGraphic(binding.graphicOverlay, element)
+//                        binding.graphicOverlay.add(textGraphic)
+//                    }
                 }
             }
         }
@@ -307,10 +336,10 @@ class MainActivity : AppCompatActivity() {
         Log.d(TAG, "[processObjectRecognitionResult] resultList=$resultList")
 
         if (resultList.isNotEmpty()) {
-            graphicOverlay.clear()
+            binding.graphicOverlay.clear()
             for (result in resultList) {
-                val objectGraphic = ObjectGraphic(graphicOverlay, result)
-                graphicOverlay.add(objectGraphic)
+                val objectGraphic = ObjectGraphic(binding.graphicOverlay, result)
+                binding.graphicOverlay.add(objectGraphic)
             }
         }
     }
