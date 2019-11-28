@@ -3,6 +3,7 @@ package com.example.myapplication
 import android.Manifest
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.RectF
 import androidx.appcompat.app.AppCompatActivity
@@ -20,13 +21,8 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import com.example.myapplication.databinding.ActivityMainBinding
-import com.example.myapplication.view.GraphicOverlay
-import com.example.myapplication.view.ObjectGraphic
-import com.example.myapplication.view.TextGraphic
 import com.google.firebase.ml.vision.FirebaseVision
 import com.google.firebase.ml.vision.common.FirebaseVisionImage
-import com.google.firebase.ml.vision.objects.FirebaseVisionObject
-import com.google.firebase.ml.vision.objects.FirebaseVisionObjectDetectorOptions
 import com.google.firebase.ml.vision.text.FirebaseVisionText
 import kotlin.math.min
 
@@ -42,6 +38,8 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private val TAG = MainActivity::class.java.simpleName
+
+        const val TEXT_COLOR = Color.YELLOW
     }
 
     private lateinit var binding: ActivityMainBinding
@@ -232,10 +230,7 @@ class MainActivity : AppCompatActivity() {
 
             val visionImage = FirebaseVisionImage.fromBitmap(bitmap)
 
-            when(binding.radioGroup.checkedRadioButtonId) {
-                R.id.radio_text -> { analyzeText(visionImage) }
-                R.id.radio_object -> { analyzeObject(visionImage) }
-            }
+            analyzeText(visionImage)
         }
     }
 
@@ -254,25 +249,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * 物体認識を行う
-     *
-     * @param visionImage 解析対象の画像
-     */
-    private fun analyzeObject(visionImage: FirebaseVisionImage) {
-        Log.d(TAG, "[analyzeObject] visionImage=$visionImage")
-
-        val options = FirebaseVisionObjectDetectorOptions.Builder()
-            .setDetectorMode(FirebaseVisionObjectDetectorOptions.SINGLE_IMAGE_MODE)
-            .enableMultipleObjects()
-            .enableClassification()
-            .build()
-        val detector = FirebaseVision.getInstance().getOnDeviceObjectDetector(options)
-        detector.processImage(visionImage)
-            .addOnSuccessListener { objectList -> processObjectRecognitionResult(objectList) }
-            .addOnFailureListener { e -> e.printStackTrace() }
-    }
-
-    /**
      * テキスト認識結果を画面に表示する
      *
      * @param result テキスト認識結果
@@ -280,12 +256,9 @@ class MainActivity : AppCompatActivity() {
     private fun processTextRecognitionResult(result: FirebaseVisionText) {
         Log.d(TAG, "[processTextRecognitionResult] result.text=${result.text}")
 
+        binding.frameLayout.removeAllViews()
         val blocks = result.textBlocks
         if (blocks.isNotEmpty()) {
-            binding.graphicOverlay.clear()
-//            binding.graphicOverlay.visibility = View.VISIBLE
-            binding.frameLayout.removeAllViews()
-            binding.frameLayout.visibility = View.VISIBLE
             for (block in blocks) {
                 val lines = block.lines
                 for (line in lines) {
@@ -294,7 +267,7 @@ class MainActivity : AppCompatActivity() {
                     val rect = RectF(line.boundingBox)
                     textView.apply {
 
-                        setTextColor(GraphicOverlay.Companion.Graphic.TEXT_COLOR)
+                        setTextColor(TEXT_COLOR)
 
                         val n = line.text.length
                         val fontSize = min(rect.width() / n, rect.height())
@@ -316,30 +289,7 @@ class MainActivity : AppCompatActivity() {
                         it.width = ViewGroup.LayoutParams.WRAP_CONTENT
                         textView.layoutParams = it
                     }
-
-//                    val elements = line.elements
-//                    for (element in elements) {
-//                        val textGraphic = TextGraphic(binding.graphicOverlay, element)
-//                        binding.graphicOverlay.add(textGraphic)
-//                    }
                 }
-            }
-        }
-    }
-
-    /**
-     * 物体認識結果を画面に表示する
-     *
-     * @param resultList 物体認識結果
-     */
-    private fun processObjectRecognitionResult(resultList: List<FirebaseVisionObject>) {
-        Log.d(TAG, "[processObjectRecognitionResult] resultList=$resultList")
-
-        if (resultList.isNotEmpty()) {
-            binding.graphicOverlay.clear()
-            for (result in resultList) {
-                val objectGraphic = ObjectGraphic(binding.graphicOverlay, result)
-                binding.graphicOverlay.add(objectGraphic)
             }
         }
     }

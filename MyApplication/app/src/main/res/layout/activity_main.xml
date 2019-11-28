@@ -17,51 +17,14 @@
                 app:layout_constraintRight_toRightOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
-        <com.example.myapplication.view.GraphicOverlay
-                android:id="@+id/graphic_overlay"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:visibility="gone"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintLeft_toLeftOf="parent"
-                app:layout_constraintRight_toRightOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
         <FrameLayout
                 android:id="@+id/frame_layout"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:visibility="gone"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
-
-        <RadioGroup
-                android:id="@+id/radio_group"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:padding="16dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent">
-
-            <RadioButton
-                    android:id="@+id/radio_text"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="true"
-                    android:text="Text"
-                    app:layout_constraintBottom_toTopOf="@id/radio_object"
-                    app:layout_constraintStart_toStartOf="parent" />
-
-            <RadioButton
-                    android:id="@+id/radio_object"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Object"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toStartOf="parent" />
-        </RadioGroup>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>
