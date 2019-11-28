@@ -1,6 +1,7 @@
 package com.example.myapplication
 
 import android.Manifest
+import android.animation.Animator
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Color
@@ -12,7 +13,6 @@ import android.os.Handler
 import android.util.Log
 import android.util.Size
 import android.view.Surface
-import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
@@ -21,6 +21,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import com.example.myapplication.databinding.ActivityMainBinding
+import com.example.myapplication.util.YLAnimationUtil
 import com.google.firebase.ml.vision.FirebaseVision
 import com.google.firebase.ml.vision.common.FirebaseVisionImage
 import com.google.firebase.ml.vision.text.FirebaseVisionText
@@ -54,6 +55,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
     private var ableRunning = false
+    private var isAnimation = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -256,12 +258,16 @@ class MainActivity : AppCompatActivity() {
     private fun processTextRecognitionResult(result: FirebaseVisionText) {
         Log.d(TAG, "[processTextRecognitionResult] result.text=${result.text}")
 
+        if (isAnimation) return
         binding.frameLayout.removeAllViews()
         val blocks = result.textBlocks
         if (blocks.isNotEmpty()) {
             for (block in blocks) {
                 val lines = block.lines
                 for (line in lines) {
+                    val pattern = "^[0-9]{3}-[0-9]{3}-[0-9]{3}$"
+                    if (!Regex(pattern).matches(line.text)) continue
+
                     val textView = TextView(binding.frameLayout.context)
                     binding.frameLayout.addView(textView)
                     val rect = RectF(line.boundingBox)
@@ -281,8 +287,24 @@ class MainActivity : AppCompatActivity() {
                         setBackgroundResource(R.drawable.text_frame_style)
 
                         setOnClickListener {
-                            Toast.makeText(binding.frameLayout.context, line.text, Toast.LENGTH_SHORT).show()
+                            YLAnimationUtil.transitionListDetail(binding.animationBackground, it, object : Animator.AnimatorListener{
+                                override fun onAnimationRepeat(animator: Animator?) {}
+
+                                override fun onAnimationEnd(animator: Animator?) {
+                                    isAnimation = false
+                                }
+
+                                override fun onAnimationCancel(animator: Animator?) {
+                                    isAnimation = false
+                                }
+
+                                override fun onAnimationStart(animator: Animator?) {
+                                    isAnimation = true
+                                    Toast.makeText(binding.frameLayout.context, line.text, Toast.LENGTH_SHORT).show()
+                                }
+                            })
                         }
+                        alpha = 0.0f
                     }
                     textView.layoutParams.let {
                         it.height = ViewGroup.LayoutParams.WRAP_CONTENT
