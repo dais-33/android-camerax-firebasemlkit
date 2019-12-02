@@ -48,5 +48,4 @@ dependencies {
 
     // FirebaseMLKit
     implementation 'com.google.firebase:firebase-ml-vision:24.0.1'
-    implementation 'com.google.firebase:firebase-ml-vision-object-detection-model:19.0.3'
 }
